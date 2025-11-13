@@ -1,7 +1,7 @@
-import calc
+from calc import add, sub  # whatever functions you test
 
 def test_add():
-    assert calc.add(2, 3) == 5
+    assert add(2, 3) == 5
 
 def test_sub():
-    assert calc.sub(10, 4) == 6
+    assert sub(10, 4) == 6
