@@ -1,4 +1,4 @@
-import app.calc as calc
+import calc as calc
 
 def test_add():
     assert calc.add(2, 3) == 5
