@@ -17,45 +17,6 @@ pipeline {
             }
         }
 
-        stage('Load .env Secrets') {
-            steps {
-                script {
-                    // Try to locate .env without failing the whole build if absent.
-                    def candidatePaths = [ '.env', "${env.WORKSPACE}/.env", '/var/jenkins_home/.env' ]
-                    def envPath = candidatePaths.find { fileExists(it) }
-
-                    if (!envPath) {
-                        echo 'WARNING: .env file not found. Webex notifications will be skipped.'
-                        // Mark a description hint and exit stage early
-                        currentBuild.description = ((currentBuild.description ?: '') + ' | no .env -> skip notify').trim()
-                        return
-                    }
-                    echo "Loading secrets from ${envPath}";
-                    def dotenv = readFile(envPath)
-                    def vars = [:]
-                    dotenv.readLines().each { line ->
-                        def trimmed = line.trim()
-                        if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
-                            def parts = trimmed.split('=', 2)
-                            vars[parts[0].trim()] = parts[1].trim()
-                        }
-                    }
-                    def missingKeys = []
-                    if (!vars['WEBEX_TOKEN']) missingKeys << 'WEBEX_TOKEN'
-                    if (!vars['WEBEX_ROOM_ID']) missingKeys << 'WEBEX_ROOM_ID'
-                    if (missingKeys) {
-                        echo "WARNING: Missing keys in .env: ${missingKeys.join(', ')}. Skipping notifications.";
-                        currentBuild.description = ((currentBuild.description ?: '') + ' | incomplete .env').trim()
-                        return
-                    }
-                    // Export into environment for later stages/post
-                    env.WEBEX_TOKEN   = vars['WEBEX_TOKEN']
-                    env.WEBEX_ROOM_ID = vars['WEBEX_ROOM_ID']
-                    echo 'Loaded WEBEX_TOKEN and WEBEX_ROOM_ID from .env'
-                }
-            }
-        }
-
         stage('Setup Python Environment') {
             steps {
                 sh '''
@@ -82,13 +43,11 @@ pipeline {
     post {
         always {
             script {
-                def token  = env.WEBEX_TOKEN
-                def roomId = env.WEBEX_ROOM_ID
-
-                if (!token || !roomId) {
-                    echo 'Webex notification skipped: secrets not loaded (no or incomplete .env).'
-                    return
-                }
+                // ⚠️ TEMP FOR ASSIGNMENT DEMO ONLY
+                // 1) Put your bot token here (NO "Bearer ", just the token)
+                // 2) Put your roomId here (Y2lzY29z... string)
+                def token  = 'Zjc4MjMwMWYtZWZhMS00OTY0LTkzYjgtOGMzYWNlMjgzMTUzNGEyMGQxYzYtYTZi_P0A1_13494cac-24b4-4f89-8247-193cc92a7636'
+                def roomId = 'Y2lzY29zcGFyazovL3VybjpURUFNOnVzLXdlc3QtMl9yL1JPT00vZmUxOGQ0NjAtYzA0Mi0xMWYwLWExMTEtM2RmZDJiNjVhNjZj'
 
                 def status  = currentBuild.currentResult ?: 'UNKNOWN'
                 def message = "Job: ${env.JOB_NAME} #${env.BUILD_NUMBER} | Branch: ${env.BRANCH_NAME ?: 'n/a'} | Result: ${status} | Console: ${env.BUILD_URL}console"
