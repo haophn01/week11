@@ -9,7 +9,7 @@ pipeline {
     environment {
         VENV_DIR      = '.venv'
         // These IDs must match your Jenkins credentials exactly
-        WEBEX_TOKEN   = credentials('The_Bot_Access_Token')
+        WEBEX_TOKEN   = credentials('Webex_Token')
         WEBEX_ROOM_ID = credentials('Webex_room_Id')
     }
 
