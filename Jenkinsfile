@@ -43,9 +43,7 @@ pipeline {
     post {
         always {
             script {
-                // ⚠️ TEMP FOR ASSIGNMENT DEMO ONLY
-                // 1) Put your bot token here (NO "Bearer ", just the token)
-                // 2) Put your roomId here (Y2lzY29z... string)
+                
                 def token  = 'Zjc4MjMwMWYtZWZhMS00OTY0LTkzYjgtOGMzYWNlMjgzMTUzNGEyMGQxYzYtYTZi_P0A1_13494cac-24b4-4f89-8247-193cc92a7636'
                 def roomId = 'Y2lzY29zcGFyazovL3VybjpURUFNOnVzLXdlc3QtMl9yL1JPT00vZmUxOGQ0NjAtYzA0Mi0xMWYwLWExMTEtM2RmZDJiNjVhNjZj'
 
