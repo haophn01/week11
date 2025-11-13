@@ -1,4 +1,4 @@
-from calc import add, sub  # whatever functions you test
+from app.calc import add, sub  # import from the app package
 
 def test_add():
     assert add(2, 3) == 5

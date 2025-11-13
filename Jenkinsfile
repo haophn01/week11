@@ -25,10 +25,15 @@ pipeline {
             steps {
                 sh '''
                     set -e
-                    python3 -m venv ${VENV_DIR}
+                    # Detect python executable (python3 preferred, fallback to python)
+                    if command -v python3 >/dev/null 2>&1; then PY=python3; 
+                    elif command -v python >/dev/null 2>&1; then PY=python; 
+                    else echo "Python not found on agent"; exit 127; fi
+
+                    "$PY" -m venv ${VENV_DIR}
                     . ${VENV_DIR}/bin/activate
-                    pip install --upgrade pip
-                    pip install -r requirements.txt
+                    "$PY" -m pip install --upgrade pip
+                    "$PY" -m pip install -r requirements.txt
                 '''
             }
         }
