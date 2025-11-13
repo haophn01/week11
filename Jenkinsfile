@@ -43,6 +43,8 @@ pipeline {
                 sh '''
                     set -e
                     . ${VENV_DIR}/bin/activate
+                    # Ensure the workspace (which contains the 'app' package) is on PYTHONPATH
+                    export PYTHONPATH="$PWD:${PYTHONPATH}"
                     pytest -q --maxfail=1 --disable-warnings
                 '''
             }
