@@ -7,8 +7,9 @@ pipeline {
 
     environment {
         VENV_DIR      = '.venv'
-        Webex_Token   = credentials('Webex_Token')      // Secret text = bot OR personal token
-        Webex_room_Id = credentials('Webex_room_Id')    // Secret text = roomId
+        // Env var names (left) can be anything, but credentials('...') MUST match Jenkins IDs
+        WEBEX_TOKEN   = credentials('WEBEX_TOKEN')       // Jenkins credential ID
+        WEBEX_ROOM_ID = credentials('WEBEX_ROOM_ID')     // Jenkins credential ID
     }
 
     stages {
@@ -45,30 +46,33 @@ pipeline {
     post {
         always {
             script {
-                // Only attempt Webex notify if both credentials are present
-                def token = env.Webex_Token?.trim()
-                def roomId = env.Webex_room_Id?.trim()
+                // Read from env.* (these are populated by environment { ... } above)
+                def token = env.WEBEX_TOKEN?.trim()
+                def roomId = env.WEBEX_ROOM_ID?.trim()
+
                 if (!token || !roomId) {
-                    echo 'Webex notification skipped: missing WEBEX_TOKEN or WEBEX_ROOM_ID credentials.'
-                    echo  "${token}"
-                    echo  "${roomId}"
+                    echo 'Webex notification skipped: missing WEBEX_TOKEN or WEBEX_ROOM_ID.'
+                    echo "DEBUG token len: ${token?.length()}"
+                    echo "DEBUG roomId len: ${roomId?.length()}"
                     return
                 }
 
-                def status = currentBuild.currentResult ?: 'UNKNOWN'
+                def status  = currentBuild.currentResult ?: 'UNKNOWN'
                 def message = "Job: ${env.JOB_NAME} #${env.BUILD_NUMBER} | Branch: ${env.BRANCH_NAME ?: 'n/a'} | Result: ${status} | Console: ${env.BUILD_URL}console"
 
-                // Send message; don't fail the build if the API rejects (e.g., 401)
                 try {
                     httpRequest(
                         httpMode: 'POST',
                         url: 'https://webexapis.com/v1/messages',
-                        customHeaders: [[name: 'Authorization', value: "Bearer ${token}"]],
+                        customHeaders: [
+                            [name: 'Authorization', value: "Bearer ${token}"],
+                            [name: 'Content-Type',  value: 'application/json']
+                        ],
                         contentType: 'APPLICATION_JSON',
                         validResponseCodes: '200:299',
                         requestBody: groovy.json.JsonOutput.toJson([
                             roomId  : roomId,
-                            markdown: "**Build ${status}**\n${message}"
+                            text    : "Build ${status} - ${message}"
                         ])
                     )
                 } catch (e) {
