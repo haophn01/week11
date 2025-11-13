@@ -6,7 +6,11 @@ pipeline {
     }
 
     environment {
-        VENV_DIR = '.venv'
+        VENV_DIR      = '.venv'
+        // WEBEX_TOKEN   = credentials('Webex_Token')      // Secret text = bot OR personal token
+        // WEBEX_ROOM_ID = credentials('Webex_room_Id')    // Secret text = roomId
+        WEBEX_TOKEN   = 'Zjc4MjMwMWYtZWZhMS00OTY0LTkzYjgtOGMzYWNlMjgzMTUzNGEyMGQxYzYtYTZi_P0A1_13494cac-24b4-4f89-8247-193cc92a7636'    
+        WEBEX_ROOM_ID = 'Y2lzY29zcGFyazovL3VybjpURUFNOnVzLXdlc3QtMl9yL1JPT00vZmUxOGQ0NjAtYzA0Mi0xMWYwLWExMTEtM2RmZDJiNjVhNjZj'
     }
 
     stages {
@@ -41,33 +45,52 @@ pipeline {
     }
 
     post {
-        always {
+
+        success {
             script {
-                
-                def token  = 'Zjc4MjMwMWYtZWZhMS00OTY0LTkzYjgtOGMzYWNlMjgzMTUzNGEyMGQxYzYtYTZi_P0A1_13494cac-24b4-4f89-8247-193cc92a7636'
-                def roomId = 'Y2lzY29zcGFyazovL3VybjpURUFNOnVzLXdlc3QtMl9yL1JPT00vZmUxOGQ0NjAtYzA0Mi0xMWYwLWExMTEtM2RmZDJiNjVhNjZj'
 
-                def status  = currentBuild.currentResult ?: 'UNKNOWN'
-                def message = "Job: ${env.JOB_NAME} #${env.BUILD_NUMBER} | Branch: ${env.BRANCH_NAME ?: 'n/a'} | Result: ${status} | Console: ${env.BUILD_URL}console"
+                def message = "Build SUCCESS - Job: ${env.JOB_NAME} #${env.BUILD_NUMBER} - Console: ${env.BUILD_URL}console"
 
-                try {
-                    httpRequest(
-                        httpMode: 'POST',
-                        url: 'https://webexapis.com/v1/messages',
-                        customHeaders: [
-                            [name: 'Authorization', value: "Bearer ${token}"],
-                            [name: 'Content-Type',  value: 'application/json']
-                        ],
-                        contentType: 'APPLICATION_JSON',
-                        validResponseCodes: '200:299',
-                        requestBody: groovy.json.JsonOutput.toJson([
-                            roomId  : roomId,
-                            text    : "Build ${status} - ${message}"
-                        ])
-                    )
-                } catch (e) {
-                    echo "Webex notification failed (non-fatal): ${e.message}"
-                }
+                // OPTIONAL DEBUG - REMOVE ONCE IT WORKS
+                echo "DEBUG: TOKEN LENGTH = ${env.WEBEX_TOKEN?.length()}"
+                echo "DEBUG: ROOMID LENGTH = ${env.WEBEX_ROOM_ID?.length()}"
+
+                httpRequest(
+                    httpMode: 'POST',
+                    url: 'https://webexapis.com/v1/messages',
+                    customHeaders: [
+                        [name: 'Authorization', value: "Bearer ${env.WEBEX_TOKEN}"],
+                        [name: 'Content-Type', value: 'application/json']
+                    ],
+                    requestBody: """
+                    {
+                        "roomId": "${env.WEBEX_ROOM_ID}",
+                        "text": "${message}"
+                    }
+                    """
+                )
+            }
+        }
+
+        failure {
+            script {
+
+                def message = "Build FAILED - Job: ${env.JOB_NAME} #${env.BUILD_NUMBER} - Console: ${env.BUILD_URL}console"
+
+                httpRequest(
+                    httpMode: 'POST',
+                    url: 'https://webexapis.com/v1/messages',
+                    customHeaders: [
+                        [name: 'Authorization', value: "Bearer ${env.WEBEX_TOKEN}"],
+                        [name: 'Content-Type', value: 'application/json']
+                    ],
+                    requestBody: """
+                    {
+                        "roomId": "${env.WEBEX_ROOM_ID}",
+                        "text": "${message}"
+                    }
+                    """
+                )
             }
         }
     }
