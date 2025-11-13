@@ -51,7 +51,7 @@ pipeline {
                 if (!token || !roomId) {
                     echo 'Webex notification skipped: missing WEBEX_TOKEN or WEBEX_ROOM_ID credentials.'
                     echo  "${token}"
-                    echo  "$${roomId}"
+                    echo  "${roomId}"
                     return
                 }
 
