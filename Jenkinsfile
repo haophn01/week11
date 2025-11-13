@@ -8,8 +8,8 @@ pipeline {
 
     environment {
         VENV_DIR      = '.venv'
-        WEBEX_TOKEN   = credentials('webex_bot_token')
-        WEBEX_ROOM_ID = credentials('webex_room_id')
+        WEBEX_TOKEN   = credentials('The_Bot_Access_Token')
+        WEBEX_ROOM_ID = credentials('Webex_room_Id')
     }
 
     stages {
