@@ -2,18 +2,17 @@ pipeline {
     agent any
 
     triggers {
-        // GitHub webhook will hit /github-webhook/
         githubPush()
     }
 
     environment {
         VENV_DIR      = '.venv'
-        // These IDs must match your Jenkins credentials exactlys
-        WEBEX_TOKEN   = credentials('Webex_Token')
-        WEBEX_ROOM_ID = credentials('Webex_room_Id')
+        WEBEX_TOKEN   = credentials('Webex_Token')      // Secret text = bot OR personal token
+        WEBEX_ROOM_ID = credentials('Webex_room_Id')    // Secret text = roomId
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 checkout scm
@@ -44,44 +43,51 @@ pipeline {
     }
 
     post {
+
         success {
             script {
-                def message = """**Build SUCCESS**
-Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}
-Branch: ${env.BRANCH_NAME ?: 'n/a'}
-Console: ${env.BUILD_URL}console
-"""
+
+                def message = "Build SUCCESS - Job: ${env.JOB_NAME} #${env.BUILD_NUMBER} - Console: ${env.BUILD_URL}console"
+
+                // OPTIONAL DEBUG - REMOVE ONCE IT WORKS
+                echo "DEBUG: TOKEN LENGTH = ${env.WEBEX_TOKEN?.length()}"
+                echo "DEBUG: ROOMID LENGTH = ${env.WEBEX_ROOM_ID?.length()}"
 
                 httpRequest(
                     httpMode: 'POST',
                     url: 'https://webexapis.com/v1/messages',
-                    customHeaders: [[name: 'Authorization', value: "Bearer ${env.WEBEX_TOKEN}"]],
-                    contentType: 'APPLICATION_JSON',
-                    requestBody: groovy.json.JsonOutput.toJson([
-                        roomId  : env.WEBEX_ROOM_ID,
-                        markdown: message
-                    ])
+                    customHeaders: [
+                        [name: 'Authorization', value: "Bearer ${env.WEBEX_TOKEN}"],
+                        [name: 'Content-Type', value: 'application/json']
+                    ],
+                    requestBody: """
+                    {
+                        "roomId": "${env.WEBEX_ROOM_ID}",
+                        "text": "${message}"
+                    }
+                    """
                 )
             }
         }
 
         failure {
             script {
-                def message = """**Build FAILED**
-Job: ${env.JOB_NAME} #${env.BUILD_NUMBER}
-Branch: ${env.BRANCH_NAME ?: 'n/a'}
-Console: ${env.BUILD_URL}console
-"""
+
+                def message = "Build FAILED - Job: ${env.JOB_NAME} #${env.BUILD_NUMBER} - Console: ${env.BUILD_URL}console"
 
                 httpRequest(
                     httpMode: 'POST',
                     url: 'https://webexapis.com/v1/messages',
-                    customHeaders: [[name: 'Authorization', value: "Bearer ${env.WEBEX_TOKEN}"]],
-                    contentType: 'APPLICATION_JSON',
-                    requestBody: groovy.json.JsonOutput.toJson([
-                        roomId  : env.WEBEX_ROOM_ID,
-                        markdown: message
-                    ])
+                    customHeaders: [
+                        [name: 'Authorization', value: "Bearer ${env.WEBEX_TOKEN}"],
+                        [name: 'Content-Type', value: 'application/json']
+                    ],
+                    requestBody: """
+                    {
+                        "roomId": "${env.WEBEX_ROOM_ID}",
+                        "text": "${message}"
+                    }
+                    """
                 )
             }
         }
