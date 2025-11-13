@@ -6,10 +6,7 @@ pipeline {
     }
 
     environment {
-        VENV_DIR      = '.venv'
-        // Env var names (left) can be anything, but credentials('...') MUST match Jenkins IDs
-        WEBEX_TOKEN   = credentials('WEBEX_TOKEN')       // Jenkins credential ID
-        WEBEX_ROOM_ID = credentials('WEBEX_ROOM_ID')     // Jenkins credential ID
+        VENV_DIR = '.venv'
     }
 
     stages {
@@ -17,6 +14,32 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 checkout scm
+            }
+        }
+
+        stage('Load .env Secrets') {
+            steps {
+                script {
+                    if (!fileExists('.env')) {
+                        error 'Missing .env file in workspace. Provide it (not committed) on the agent before running.'
+                    }
+                    def dotenv = readFile('.env')
+                    def vars = [:]
+                    dotenv.readLines().each { line ->
+                        def trimmed = line.trim()
+                        if (trimmed && !trimmed.startsWith('#') && trimmed.contains('=')) {
+                            def parts = trimmed.split('=', 2)
+                            vars[parts[0].trim()] = parts[1].trim()
+                        }
+                    }
+                    if (!vars['WEBEX_TOKEN'] || !vars['WEBEX_ROOM_ID']) {
+                        error 'WEBEX_TOKEN or WEBEX_ROOM_ID missing in .env file.'
+                    }
+                    // Export into environment for later stages/post
+                    env.WEBEX_TOKEN   = vars['WEBEX_TOKEN']
+                    env.WEBEX_ROOM_ID = vars['WEBEX_ROOM_ID']
+                    echo 'Loaded WEBEX_TOKEN and WEBEX_ROOM_ID from .env'
+                }
             }
         }
 
@@ -46,14 +69,11 @@ pipeline {
     post {
         always {
             script {
-                // Read from env.* (these are populated by environment { ... } above)
-                def token = env.WEBEX_TOKEN?.trim()
-                def roomId = env.WEBEX_ROOM_ID?.trim()
+                def token  = env.WEBEX_TOKEN
+                def roomId = env.WEBEX_ROOM_ID
 
                 if (!token || !roomId) {
-                    echo 'Webex notification skipped: missing WEBEX_TOKEN or WEBEX_ROOM_ID.'
-                    echo "DEBUG token len: ${token?.length()}"
-                    echo "DEBUG roomId len: ${roomId?.length()}"
+                    echo 'Webex notification skipped: secrets not loaded.'
                     return
                 }
 

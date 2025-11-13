@@ -1,0 +1,92 @@
+# =============================
+# Python build / runtime artifacts
+# =============================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+wheelhouse/
+*.egg
+*.egg-info/
+.eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+.cache
+.nox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.env/
+
+# If you keep a separate requirements lock folder
+requirements/*.txt
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+
+# Type checker caches
+.mypy_cache/
+.pyre/
+.pytype/
+
+# PyBuilder
+target/
+
+# Logs
+*.log
+
+# Environment / secrets (Webex token, etc.)
+.env
+.env.*
+# Prevent accidental commit of token files
+webex_token.txt
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc temporary
+*.tmp
+*.bak
+*.orig
+
+# Jenkins specific (workspace scratch that might appear if copied locally)
+# Do NOT ignore Jenkinsfile itself
+# Add patterns if you ever archive workspace artifacts here
+
+# Generated JSON or cache (add selectively if safe)
+# *.json
+
+# Keep explicit allowlist notes
+# !requirements.txt  (ensure dependencies file tracked)
+
+# End of file
