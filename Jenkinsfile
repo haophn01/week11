@@ -43,52 +43,35 @@ pipeline {
     }
 
     post {
-
-        success {
+        always {
             script {
+                // Only attempt Webex notify if both credentials are present
+                def token = env.WEBEX_TOKEN?.trim()
+                def roomId = env.WEBEX_ROOM_ID?.trim()
+                if (!token || !roomId) {
+                    echo 'Webex notification skipped: missing WEBEX_TOKEN or WEBEX_ROOM_ID credentials.'
+                    return
+                }
 
-                def message = "Build SUCCESS - Job: ${env.JOB_NAME} #${env.BUILD_NUMBER} - Console: ${env.BUILD_URL}console"
+                def status = currentBuild.currentResult ?: 'UNKNOWN'
+                def message = "Job: ${env.JOB_NAME} #${env.BUILD_NUMBER} | Branch: ${env.BRANCH_NAME ?: 'n/a'} | Result: ${status} | Console: ${env.BUILD_URL}console"
 
-                // OPTIONAL DEBUG - REMOVE ONCE IT WORKS
-                echo "DEBUG: TOKEN LENGTH = ${env.WEBEX_TOKEN?.length()}"
-                echo "DEBUG: ROOMID LENGTH = ${env.WEBEX_ROOM_ID?.length()}"
-
-                httpRequest(
-                    httpMode: 'POST',
-                    url: 'https://webexapis.com/v1/messages',
-                    customHeaders: [
-                        [name: 'Authorization', value: "Bearer ${env.WEBEX_TOKEN}"],
-                        [name: 'Content-Type', value: 'application/json']
-                    ],
-                    requestBody: """
-                    {
-                        "roomId": "${env.WEBEX_ROOM_ID}",
-                        "text": "${message}"
-                    }
-                    """
-                )
-            }
-        }
-
-        failure {
-            script {
-
-                def message = "Build FAILED - Job: ${env.JOB_NAME} #${env.BUILD_NUMBER} - Console: ${env.BUILD_URL}console"
-
-                httpRequest(
-                    httpMode: 'POST',
-                    url: 'https://webexapis.com/v1/messages',
-                    customHeaders: [
-                        [name: 'Authorization', value: "Bearer ${env.WEBEX_TOKEN}"],
-                        [name: 'Content-Type', value: 'application/json']
-                    ],
-                    requestBody: """
-                    {
-                        "roomId": "${env.WEBEX_ROOM_ID}",
-                        "text": "${message}"
-                    }
-                    """
-                )
+                // Send message; don't fail the build if the API rejects (e.g., 401)
+                try {
+                    httpRequest(
+                        httpMode: 'POST',
+                        url: 'https://webexapis.com/v1/messages',
+                        customHeaders: [[name: 'Authorization', value: "Bearer ${token}"]],
+                        contentType: 'APPLICATION_JSON',
+                        validResponseCodes: '200:299',
+                        requestBody: groovy.json.JsonOutput.toJson([
+                            roomId  : roomId,
+                            markdown: "**Build ${status}**\n${message}"
+                        ])
+                    )
+                } catch (e) {
+                    echo "Webex notification failed (non-fatal): ${e.message}"
+                }
             }
         }
     }
