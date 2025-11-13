@@ -8,6 +8,7 @@ pipeline {
 
     environment {
         VENV_DIR      = '.venv'
+        // These IDs must match your Jenkins credentials exactly
         WEBEX_TOKEN   = credentials('The_Bot_Access_Token')
         WEBEX_ROOM_ID = credentials('Webex_room_Id')
     }
@@ -54,10 +55,10 @@ Console: ${env.BUILD_URL}console
                 httpRequest(
                     httpMode: 'POST',
                     url: 'https://webexapis.com/v1/messages',
-                    customHeaders: [[name: 'Authorization', value: "Bearer ${WEBEX_TOKEN}"]],
+                    customHeaders: [[name: 'Authorization', value: "Bearer ${env.WEBEX_TOKEN}"]],
                     contentType: 'APPLICATION_JSON',
                     requestBody: groovy.json.JsonOutput.toJson([
-                        roomId  : WEBEX_ROOM_ID,
+                        roomId  : env.WEBEX_ROOM_ID,
                         markdown: message
                     ])
                 )
@@ -75,10 +76,10 @@ Console: ${env.BUILD_URL}console
                 httpRequest(
                     httpMode: 'POST',
                     url: 'https://webexapis.com/v1/messages',
-                    customHeaders: [[name: 'Authorization', value: "Bearer ${WEBEX_TOKEN}"]],
+                    customHeaders: [[name: 'Authorization', value: "Bearer ${env.WEBEX_TOKEN}"]],
                     contentType: 'APPLICATION_JSON',
                     requestBody: groovy.json.JsonOutput.toJson([
-                        roomId  : WEBEX_ROOM_ID,
+                        roomId  : env.WEBEX_ROOM_ID,
                         markdown: message
                     ])
                 )
