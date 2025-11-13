@@ -7,8 +7,8 @@ pipeline {
 
     environment {
         VENV_DIR      = '.venv'
-        WEBEX_TOKEN   = credentials('Webex_Token')      // Secret text = bot OR personal token
-        WEBEX_ROOM_ID = credentials('Webex_room_Id')    // Secret text = roomId
+        Webex_Token   = credentials('Webex_Token')      // Secret text = bot OR personal token
+        Webex_room_Id = credentials('Webex_room_Id')    // Secret text = roomId
     }
 
     stages {
@@ -46,10 +46,12 @@ pipeline {
         always {
             script {
                 // Only attempt Webex notify if both credentials are present
-                def token = env.WEBEX_TOKEN?.trim()
-                def roomId = env.WEBEX_ROOM_ID?.trim()
+                def token = env.Webex_Token?.trim()
+                def roomId = env.Webex_room_Id?.trim()
                 if (!token || !roomId) {
                     echo 'Webex notification skipped: missing WEBEX_TOKEN or WEBEX_ROOM_ID credentials.'
+                    echo  "${token}"
+                    echo  "$${roomId}"
                     return
                 }
 
